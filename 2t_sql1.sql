@@ -49,6 +49,18 @@ from department dep
 left join employee emp
 	on chief_id = emp.emp_id 
 ),
+marks as (
+select emp.emp_id,
+sum( case when grade = 'A' then 1 else 0 end ) cnt_mark_A,
+sum( case when grade = 'B' then 1 else 0 end ) cnt_mark_B,	
+sum( case when grade = 'C' then 1 else 0 end ) cnt_mark_C,	
+sum( case when grade = 'D' then 1 else 0 end ) cnt_mark_D,
+sum( case when grade = 'E' then 1 else 0 end ) cnt_mark_E
+from employee emp
+left join rating rt
+	on emp.emp_id = rt.emp_id
+group by emp.emp_id
+),
 stats as (
 select
 dep.dep_id,
@@ -61,11 +73,11 @@ sum( case when emp_level = 'senior' then 1 else 0 end )   as senior_cnt,
 sum( case when emp_level = 'lead' then 1 else 0 end )  as lead_cnt,
 sum(case when coalesce(bonus_coef, 1) > 1.2 then salary / 1.2 when coalesce(bonus_coef, 1) between 1 and 1.2 then salary / 1.1 else salary end) as sum_before_indexation,
 sum( salary )   as sum_after_indexation,
-sum( case when grade = 'A' then 1 else 0 end ) cnt_mark_A,
-sum( case when grade = 'B' then 1 else 0 end ) cnt_mark_B,	
-sum( case when grade = 'C' then 1 else 0 end ) cnt_mark_C,	
-sum( case when grade = 'D' then 1 else 0 end ) cnt_mark_D,
-sum( case when grade = 'E' then 1 else 0 end ) cnt_mark_E,	
+sum(cnt_mark_A ) cnt_mark_A,
+sum(cnt_mark_B) cnt_mark_B,	
+sum(cnt_mark_C ) cnt_mark_C,	
+sum(cnt_mark_D ) cnt_mark_D,
+sum(cnt_mark_E ) cnt_mark_E,	
 avg(coalesce(bonus_coef, 1)) as avg_bonus_coef,
 sum(salary * coalesce(bonus_coef, 1)) as full_bonus,
 sum((case when coalesce(bonus_coef, 1) > 1.2 then salary / 1.2 when coalesce(bonus_coef, 1) between 1 and 1.2 then salary / 1.1 else salary end) + (case when coalesce(bonus_coef, 1) > 1.2 then salary / 1.2 when coalesce(bonus_coef, 1) between 1 and 1.2 then salary / 1.1 else salary end) * coalesce(bonus_coef, 1) ) as sum_bonus_before_indexation,
@@ -78,8 +90,8 @@ sum(salary + salary * coalesce(bonus_coef, 1))  as sum_bonus_after_indexation,
 from department dep  
 left join employee emp
 	on emp.department_id = dep.dep_id
-left join rating rt
-	on emp.emp_id = rt.emp_id
+left join marks mr
+	on emp.emp_id = mr.emp_id
 group by dep.dep_id
 )
 select 
@@ -108,4 +120,3 @@ delta
 from stats
 inner join 	chief
 on stats.dep_id = chief.dep_id;
-
